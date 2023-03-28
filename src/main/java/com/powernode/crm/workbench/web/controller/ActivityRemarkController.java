@@ -10,6 +10,7 @@ import com.powernode.crm.workbench.service.ActivityRemarkService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpSession;
 import java.util.Date;
@@ -20,7 +21,7 @@ public class ActivityRemarkController {
     private ActivityRemarkService activityRemarkService;
 
     @RequestMapping("/workbench/activity/saveCreateActivityRemark.do")
-    public Object saveCreateActivityRemark(ActivityRemark remark, HttpSession session){
+    public @ResponseBody Object saveCreateActivityRemark(ActivityRemark remark, HttpSession session){
         User user = (User) session.getAttribute(Contants.SESSION_USER);
         remark.setId(UUIDUtils.getUUID());
         remark.setCreateBy(user.getId());

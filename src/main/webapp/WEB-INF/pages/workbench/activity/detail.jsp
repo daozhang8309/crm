@@ -42,21 +42,83 @@ String basePath = request.getScheme() + "://" + request.getServerName() + ":" + 
 			cancelAndSaveBtnDefault = true;
 		});
 		
-		$(".remarkDiv").mouseover(function(){
+		/*$(".remarkDiv").mouseover(function(){
 			$(this).children("div").children("div").show();
-		});
+		});*/
+		$("#remarkList").on("mouseover",".remarkDiv",function () {
+			$(this).children("div").children("div").show();
+		})
+
 		
-		$(".remarkDiv").mouseout(function(){
+		/*$(".remarkDiv").mouseout(function(){
 			$(this).children("div").children("div").hide();
-		});
+		});*/
+
+        $("#remarkList").on("mouseout",".remarkDiv",function () {
+            $(this).children("div").children("div").hide();
+        });
 		
-		$(".myHref").mouseover(function(){
+		/*$(".myHref").mouseover(function(){
 			$(this).children("span").css("color","red");
-		});
+		});*/
+		$("#remarkList").on("mouseover",".myHref",function () {
+			$(this).children("span").css("color","red");
+		})
 		
-		$(".myHref").mouseout(function(){
+		/*$(".myHref").mouseout(function(){
 			$(this).children("span").css("color","#E6E6E6");
+		});*/
+
+        $("#remarkList").on("mouseout",".myHref",function () {
+            $(this).children("span").css("color","#E6E6E6");
+        });
+
+		//给保存按钮添加单击事件
+		$("#saveCreateActivityRemarkBtn").click(function () {
+			//收集参数
+			var noteContent = $.trim($("#remark").val());
+            var activityId = '${activity.id}';
+            //表单验证
+            if(noteContent == ""){
+                alert("请输入备注");
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: 'workbench/activity/saveCreateActivityRemark.do',
+                data: {
+					noteContent:noteContent,
+					activityId:activityId
+				},
+                dataType: "json",
+                success: function(data){
+                    if(data.code == '1'){
+                        //清空输入框
+						$("#remark").val("");
+                        //刷新列表
+						var htmlStr = "";
+						htmlStr+="<div class=\"remarkDiv\" style=\"height: 60px;\">";
+						htmlStr+="<img title=\"${sessionScope.sessionUser.name}\" src=\"image/user-thumbnail.png\" style=\"width: 30px; height:30px;\">";
+						htmlStr+="<div style=\"position: relative; top: -40px; left: 40px;\" >";
+						htmlStr+="<h5>"+data.retData.noteContent+"</h5>";
+						htmlStr+="<font color=\"gray\">市场活动</font> <font color=\"gray\">-</font> <b>${activity.name}</b> <small style=\"color: gray;\"> "+data.retData.createTime+" 由${sessionScope.sessionUser.name} 创建 </small>";
+						htmlStr+="<div style=\"position: relative; left: 500px; top: -30px; height: 30px; width: 100px; display: none;\">";
+						htmlStr+="<a class=\"myHref\" remarkId=\""+data.retData.id+"\" href=\"javascript:void(0);\"><span class=\"glyphicon glyphicon-edit\" style=\"font-size: 20px; color: #E6E6E6;\"></span></a>";
+						htmlStr+="&nbsp;&nbsp;&nbsp;&nbsp;";
+						htmlStr+="<a class=\"myHref\" remarkId=\""+data.retData.id+"\" href=\"javascript:void(0);\"><span class=\"glyphicon glyphicon-remove\" style=\"font-size: 20px; color: #E6E6E6;\"></span></a>";
+						htmlStr+="</div>";
+						htmlStr+="</div>";
+						htmlStr+="</div>";
+
+						$("#remarkDiv").before(htmlStr);
+                    }else{
+                        alert(data.message);
+                    }
+                }
+            });
 		});
+
 	});
 	
 </script>
@@ -79,7 +141,7 @@ String basePath = request.getScheme() + "://" + request.getServerName() + ":" + 
                 <div class="modal-body">
                     <form class="form-horizontal" role="form">
                         <div class="form-group">
-                            <label for="edit-describe" class="col-sm-2 control-label">内容</label>
+                            <label for="noteContent" class="col-sm-2 control-label">内容</label>
                             <div class="col-sm-10" style="width: 81%;">
                                 <textarea class="form-control" rows="3" id="noteContent"></textarea>
                             </div>
@@ -159,7 +221,7 @@ String basePath = request.getScheme() + "://" + request.getServerName() + ":" + 
 	</div>
 	
 	<!-- 备注 -->
-	<div style="position: relative; top: 30px; left: 40px;">
+	<div id="remarkList" style="position: relative; top: 30px; left: 40px;">
 		<div class="page-header">
 			<h4>备注</h4>
 		</div>
