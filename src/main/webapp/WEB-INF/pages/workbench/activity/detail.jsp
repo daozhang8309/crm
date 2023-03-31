@@ -98,15 +98,15 @@ String basePath = request.getScheme() + "://" + request.getServerName() + ":" + 
 						$("#remark").val("");
                         //刷新列表
 						var htmlStr = "";
-						htmlStr+="<div class=\"remarkDiv\" style=\"height: 60px;\">";
+						htmlStr+="<div id=\"div_"+data.retData.id+"\" class=\"remarkDiv\" style=\"height: 60px;\">";
 						htmlStr+="<img title=\"${sessionScope.sessionUser.name}\" src=\"image/user-thumbnail.png\" style=\"width: 30px; height:30px;\">";
 						htmlStr+="<div style=\"position: relative; top: -40px; left: 40px;\" >";
 						htmlStr+="<h5>"+data.retData.noteContent+"</h5>";
 						htmlStr+="<font color=\"gray\">市场活动</font> <font color=\"gray\">-</font> <b>${activity.name}</b> <small style=\"color: gray;\"> "+data.retData.createTime+" 由${sessionScope.sessionUser.name} 创建 </small>";
 						htmlStr+="<div style=\"position: relative; left: 500px; top: -30px; height: 30px; width: 100px; display: none;\">";
-						htmlStr+="<a class=\"myHref\" remarkId=\""+data.retData.id+"\" href=\"javascript:void(0);\"><span class=\"glyphicon glyphicon-edit\" style=\"font-size: 20px; color: #E6E6E6;\"></span></a>";
+						htmlStr+="<a class=\"myHref\" name=\"editA\" remarkId=\""+data.retData.id+"\" href=\"javascript:void(0);\"><span class=\"glyphicon glyphicon-edit\" style=\"font-size: 20px; color: #E6E6E6;\"></span></a>";
 						htmlStr+="&nbsp;&nbsp;&nbsp;&nbsp;";
-						htmlStr+="<a class=\"myHref\" remarkId=\""+data.retData.id+"\" href=\"javascript:void(0);\"><span class=\"glyphicon glyphicon-remove\" style=\"font-size: 20px; color: #E6E6E6;\"></span></a>";
+						htmlStr+="<a class=\"myHref\" name=\"deleteA\" remarkId=\""+data.retData.id+"\" href=\"javascript:void(0);\"><span class=\"glyphicon glyphicon-remove\" style=\"font-size: 20px; color: #E6E6E6;\"></span></a>";
 						htmlStr+="</div>";
 						htmlStr+="</div>";
 						htmlStr+="</div>";
@@ -118,6 +118,76 @@ String basePath = request.getScheme() + "://" + request.getServerName() + ":" + 
                 }
             });
 		});
+
+
+		//给删除按钮添加单击事件
+		$("#remarkList").on("click","a[name='deleteA']",function () {
+			//收集参数
+            var id = $(this).attr("remarkId");
+            $.ajax({
+                type: "POST",
+                url: 'workbench/activity/deleteActivityRemark.do',
+                data: {
+                    id: id
+                },
+                dataType: "json",
+                success: function(data){
+                    if(data.code == '1'){
+                        $("#div_"+id).remove();
+                    }else{
+                        alert(data.message);
+                    }
+                }
+            });
+        });
+
+		//给修改按钮添加单击事件
+        $("#remarkList").on("click","a[name='editA']",function () {
+            //收集参数
+            var id = $(this).attr("remarkId");
+            var noteContent = $("#div_"+id+" h5").text();
+
+            $("#edit-id").val(id);
+            $("#edit-noteContent").val(noteContent);
+            //弹出模态窗口
+            $("#editRemarkModal").modal("show");
+        });
+
+        //给模态窗口中修改按钮添加单击事件
+        $("#updateRemarkBtn").click(function () {
+            //收集参数
+            var id = $("#edit-id").val();
+            var noteContent = $.trim($("#edit-noteContent").val());
+            //表单验证
+            if(noteContent == ""){
+                alert("请输入备注");
+                return;
+            }
+            $.ajax({
+                type: "POST",
+                url: 'workbench/activity/saveEditActivityRemark.do',
+                data: {
+                    id: id,
+                    noteContent: noteContent
+                },
+                dataType: "json",
+                success: function(data){
+                    if(data.code == '1'){
+                        //关闭模态窗口
+                        $("#editRemarkModal").modal("hide");
+                        //刷新备注列表
+                        $("#div_"+data.retData.id+" h5").text(data.retData.noteContent);
+                        $("#div_"+data.retData.id+" small").text(" "+data.retData.editTime+"  由${sessionScope.sessionUser.name}修改")
+                    }else {
+                        //提示信息
+                        alert(data.message);
+                        //不关闭模态窗口
+                        $("#editRemarkModal").modal("show");
+                    }
+                }
+            })
+        });
+
 
 	});
 	
@@ -140,10 +210,11 @@ String basePath = request.getScheme() + "://" + request.getServerName() + ":" + 
                 </div>
                 <div class="modal-body">
                     <form class="form-horizontal" role="form">
+                        <input type="hidden" id="edit-id">
                         <div class="form-group">
-                            <label for="noteContent" class="col-sm-2 control-label">内容</label>
+                            <label for="edit-noteContent" class="col-sm-2 control-label">内容</label>
                             <div class="col-sm-10" style="width: 81%;">
-                                <textarea class="form-control" rows="3" id="noteContent"></textarea>
+                                <textarea class="form-control" rows="3" id="edit-noteContent"></textarea>
                             </div>
                         </div>
                     </form>
@@ -226,15 +297,15 @@ String basePath = request.getScheme() + "://" + request.getServerName() + ":" + 
 			<h4>备注</h4>
 		</div>
 		<c:forEach items="${remarkList}" var="remark">
-			<div class="remarkDiv" style="height: 60px;">
+			<div id="div_${remark.id}" class="remarkDiv" style="height: 60px;">
 				<img title="${remark.createBy}" src="image/user-thumbnail.png" style="width: 30px; height:30px;">
 				<div style="position: relative; top: -40px; left: 40px;" >
 					<h5>${remark.noteContent}</h5>
 					<font color="gray">市场活动</font> <font color="gray">-</font> <b>${activity.name}</b> <small style="color: gray;"> ${remark.editFlag=='1'?remark.editTime:remark.createTime} 由${remark.editFlag=='1'?remark.editBy:remark.createBy}${remark.editFlag=='1'?'修改':'创建'}</small>
 					<div style="position: relative; left: 500px; top: -30px; height: 30px; width: 100px; display: none;">
-						<a class="myHref" remarkId="${remark.id}" href="javascript:void(0);"><span class="glyphicon glyphicon-edit" style="font-size: 20px; color: #E6E6E6;"></span></a>
+						<a class="myHref" name="editA" remarkId="${remark.id}" href="javascript:void(0);"><span class="glyphicon glyphicon-edit" style="font-size: 20px; color: #E6E6E6;"></span></a>
 						&nbsp;&nbsp;&nbsp;&nbsp;
-						<a class="myHref" remarkId="${remark.id}" href="javascript:void(0);"><span class="glyphicon glyphicon-remove" style="font-size: 20px; color: #E6E6E6;"></span></a>
+						<a class="myHref" name="deleteA" remarkId="${remark.id}" href="javascript:void(0);"><span class="glyphicon glyphicon-remove" style="font-size: 20px; color: #E6E6E6;"></span></a>
 					</div>
 				</div>
 			</div>
